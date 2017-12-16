@@ -25,7 +25,7 @@ def get_uuid():
     else:
         print 'Error: HTTP Status Code ', u.status_code, 'when trying to get Zone UUID'
         print json_object['message']
-        exit()
+        exit(11)
 
 
 def get_dns_ip(uuid):
@@ -40,16 +40,13 @@ def get_dns_ip(uuid):
     url = config.api_endpoint + '/zones/' + uuid + '/records/' + config.subdomains[0] + '/A'
     headers = {"X-Api-Key": config.api_secret}
     u = requests.get(url, headers=headers)
+    json_object = json.loads(u._content)
     if u.status_code == 200:
-        json_object = json.loads(u._content)
-        print 'Checking IP from DNS Record', config.subdomains[0], ':', json_object['rrset_values'][0].encode('ascii',
-                                                                                                              'ignore').strip(
-            '\n')
         return json_object['rrset_values'][0].encode('ascii', 'ignore').strip('\n')
     else:
         print 'Error: HTTP Status Code ', u.status_code, 'when trying to get IP from subdomain', config.subdomains[0]
         print json_object['message']
-        exit()
+        exit(12)
 
 
 def update_records(uuid, dyn_ip, subdomain):
@@ -69,12 +66,11 @@ def update_records(uuid, dyn_ip, subdomain):
     json_object = json.loads(u._content)
 
     if u.status_code == 201:
-        print 'Status Code:', u.status_code, ',', json_object['message'], ', IP updated for', subdomain
         return True
     else:
         print 'Error: HTTP Status Code ', u.status_code, 'when trying to update IP from subdomain', subdomain
         print  json_object['message']
-        exit()
+        exit(10)
 
 
 def main(force_update, verbosity):
@@ -93,10 +89,7 @@ def main(force_update, verbosity):
         for sub in config.subdomains:
             update_records(uuid, dyn_ip, sub)
     else:
-        if dyn_ip == dns_ip:
-            print "IP Address Match - no further action"
-        else:
-            print "IP Address Mismatch - going to update the DNS Records for the subdomains with new IP", dyn_ip
+        if dyn_ip != dns_ip:
             for sub in config.subdomains:
                 update_records(uuid, dyn_ip, sub)
 
