@@ -25,25 +25,25 @@ openlog("DDNS-Provider", LOG_PID | LOG_PERROR, LOG_LOCAL0);
 
 $ip = check_ip(get_value('REMOTE_ADDRE', $_SERVER));
 if($ip === false) {
-    syslog(LOG_WARN, "No IP received.");
+    syslog(LOG_WARNING, "No IP received.");
     exit(1);
 }
 
 $user = get_value('PHP_AUTH_USER', $_SERVER);
 if($user === false) {
-    syslog(LOG_WARN, "No user given by connection from $ip");
+    syslog(LOG_WARNING, "No user given by connection from $ip");
     exit(2);
 }
 
 $pwd = get_value('PHP_AUTH_PW', $_SERVER);
 if($pwd === false) {
-    syslog(LOG_WARN, "No password given by connection from $ip with user $user");
+    syslog(LOG_WARNING, "No password given by connection from $ip with user $user");
     exit(3);
 }
 
 $domain = get_value('DOMAIN');
 if($domain === false) {
-    syslog(LOG_WARN, "User $user from $ip didn't provide any domain");
+    syslog(LOG_WARNING, "User $user from $ip didn't provide any domain");
     exit(4);
 }
 
@@ -56,7 +56,7 @@ $config = file_get_contents('template.config.py');
 
 $secret = file_get_contents('secret');
 if(empty($secret)) {
-    syslog(LOG_WARN, "No secret found.");
+    syslog(LOG_WARNING, "No secret found.");
     exit(5);
 }
 
