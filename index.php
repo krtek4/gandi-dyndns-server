@@ -14,7 +14,7 @@ function get_value($name, $data = null) {
         }
     }
 
-    return filter_var($value, FILTER_SANITIZE_STRING);
+    return $value === false ? $value : filter_var($value, FILTER_SANITIZE_STRING);
 }
 
 function check_ip($ip) {
@@ -23,25 +23,26 @@ function check_ip($ip) {
 
 openlog("DDNS-Provider", LOG_PID | LOG_PERROR, LOG_LOCAL0);
 
-$ip = check_ip(get_value('REMOTE_ADDRE', $_SERVER));
+$ip = check_ip(get_value('REMOTE_ADDR', [$_SERVER]));
 if($ip === false) {
     syslog(LOG_WARNING, "No IP received.");
     exit(1);
 }
 
-$user = get_value('PHP_AUTH_USER', $_SERVER);
-if($user === false) {
-    syslog(LOG_WARNING, "No user given by connection from $ip");
+$user = get_value('PHP_AUTH_USER', [$_SERVER]);
+$pwd = get_value('PHP_AUTH_PW', [$_SERVER]);
+if($user === false || $pwd === false) {
+    syslog(LOG_WARNING, " No token provided from $ip");
+    exit(2);
+}
+$token = $user.$pwd;
+$check = trim(file_get_contents('token'));
+if($token !== $check) {
+    syslog(LOG_WARNING, "Token ($token $check) did not match for $user from $ip");
     exit(2);
 }
 
-$pwd = get_value('PHP_AUTH_PW', $_SERVER);
-if($pwd === false) {
-    syslog(LOG_WARNING, "No password given by connection from $ip with user $user");
-    exit(3);
-}
-
-$domain = get_value('DOMAIN');
+$domain = get_value('hostname');
 if($domain === false) {
     syslog(LOG_WARNING, "User $user from $ip didn't provide any domain");
     exit(4);
@@ -54,7 +55,7 @@ $subdomain = implode('.', array_slice($parts, 0, -2));
 
 $config = file_get_contents('template.config.py');
 
-$secret = file_get_contents('secret');
+$secret = trim(file_get_contents('secret'));
 if(empty($secret)) {
     syslog(LOG_WARNING, "No secret found.");
     exit(5);
