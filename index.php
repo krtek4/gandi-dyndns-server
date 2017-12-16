@@ -23,7 +23,10 @@ function check_ip($ip) {
 
 openlog("DDNS-Provider", LOG_PID | LOG_PERROR, LOG_LOCAL0);
 
-$ip = check_ip(get_value('REMOTE_ADDR', [$_SERVER]));
+$ip = check_ip(get_value('myip'));
+if($ip === false) {
+	$ip = check_ip(get_value('REMOTE_ADDR', [$_SERVER]));
+}
 if($ip === false) {
     syslog(LOG_WARNING, "No IP received.");
     exit(1);
@@ -67,9 +70,15 @@ file_put_contents('config.py', sprintf($config,
     $subdomain,
     $ip
 ));
-exec('./gandi-live-dns.py', $output, $status);
-syslog(LOG_INFO, implode("\n", $output));
+$out = exec('python gandi-live-dns.py', $output, $status);
+
+if($status !== 0) {
+	syslog(LOG_WARNING, "status: $status");
+	syslog(LOG_WARNING, "out: $out");
+	syslog(LOG_WARNING, "output: ".print_r($output, true));
+}
 
 closelog();
 
 exit($status);
+
