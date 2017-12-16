@@ -1,0 +1,3 @@
+[submodule "gandi-live-dns"]
+	path = gandi-live-dns
+	url = git@github.com:cavebeat/gandi-live-dns.git
