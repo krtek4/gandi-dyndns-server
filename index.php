@@ -25,6 +25,12 @@ openlog("DDNS-Provider", LOG_PID | LOG_PERROR, LOG_LOCAL0);
 
 $ip = check_ip(get_value('myip'));
 if($ip === false) {
+	$ip = check_ip(get_value('ip'));
+}
+if($ip === false) {
+	$ip = check_ip(get_value('dnsto'));
+}
+if($ip === false) {
 	$ip = check_ip(get_value('REMOTE_ADDR', [$_SERVER]));
 }
 if($ip === false) {
@@ -34,6 +40,14 @@ if($ip === false) {
 
 $user = get_value('PHP_AUTH_USER', [$_SERVER]);
 $pwd = get_value('PHP_AUTH_PW', [$_SERVER]);
+if($user === false || $pwd === false) {
+	$user = get_value('domain');
+	$pwd = get_value('password');
+}
+if($user === false || $pwd === false) {
+	$user = get_value('token');
+	$pwd = '';
+}
 if($user === false || $pwd === false) {
     syslog(LOG_WARNING, " No token provided from $ip");
     exit(2);
@@ -46,6 +60,12 @@ if($token !== $check) {
 }
 
 $domain = get_value('hostname');
+if($domain === false || $domain === 'YES') {
+	$domain = get_value('host_id');
+}
+if($domain === false) {
+	$domain = get_value('host');
+}
 if($domain === false) {
     syslog(LOG_WARNING, "User $user from $ip didn't provide any domain");
     exit(4);
